@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import axios from "axios"
+import styled from "@emotion/styled"
 
 const test = {
   "data": {
@@ -14914,21 +14915,70 @@ const test = {
   },
   "request": {}
 }
+
+const RecipeContainer = styled.div`
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		grid-column-gap: 20px;
+		grid-row-gap: 20px;
+		width: 100%;
+
+		.recipe-card {
+			max-width: 100%;
+			max-height: 300px;
+			text-overflow: text-wrap;
+			display: flex;
+			img {
+				min-height: 100%;
+				max-width: 40%;
+			}
+
+			.recipe-content {
+				width: 100%;
+
+				.health-label {
+					display: inline-block;
+					background-color: #F0F2F4;
+					padding: 5px;
+					border-radius: 3px;
+				}
+			}
+		}
+`
+
+const TabContainer = styled.div`
+		
+`
  
-const map = test.data.hits.map((val) => {
-  return val.recipe
-})
+// const map = test.data.hits.map((val) => {
+//   return val.recipe
+// })
+
+const tabsData = [
+  {
+		label: 'Allergies',
+		content: [
+			'alcohol-free', 'celery-free', 'crustacean-free', 'dairy-free', 'egg-free',
+			'fish-free', 'fodmap-free', 'gluten-free', 'lupine-free', 'mollusk-free',
+			'mustard-free', 'peanut-free', 'pork-free', 'red-meat-free', 'sesame-free',
+			'shellfish-free', 'soy-free', 'sulfite-free', 'tree-nut-free', 'wheat-free'
+		],
+	},
+  { 
+		label: 'Diets',
+		content: []
+	}
+];
+
 
 export default function Home() {
   const [ingredient, setIngredient] = useState('')
-  const [recipeList, setRecipeList]  = useState(map)
+  const [recipeList, setRecipeList]  = useState([])
+	const [activeTab, setActiveTab] = useState(tabsData[0])
 
   const apiUrl = 'https://api.edamam.com/api/recipes/v2'
   const appId = process.env.REACT_APP_ID
   const appKey = process.env.REACT_APP_KEY
-
- 
-
 
   useEffect(() => {
     return () => {
@@ -14937,25 +14987,33 @@ export default function Home() {
   }, [])
 
   const getRecipeList = () => {
-    // axios.get(apiUrl, {
-    //   params: {
-    //     type: 'public',
-    //     q: ingredient,
-    //     app_id: appId,
-    //     app_key: appKey
-    //   }
-    // })
-    // .then((res) => {
-    //   console.log('response', res)
-    // })
-    // .catch((err) => {
-    //   console.log('error', err)
-    // })
+    axios.get(apiUrl, {
+      params: {
+        type: 'public',
+        q: ingredient,
+        app_id: appId,
+        app_key: appKey
+      }
+    })
+    .then((res) => {
+      const recipes = res.data.hits.map((val) => {
+				return val.recipe
+			})
+
+			setRecipeList(recipes)
+    })
+    .catch((err) => {
+      console.log('error', err)
+    })
   }
+
+	const handleTabClick = (tab) => {
+    setActiveTab(tab);
+  };
   
   return (
     <main className="min-h-screen sm:container mx-auto p-24 flex flex-col items-center">
-      <h1 className="font-bold mb-4">Recipe Finder</h1>
+      <h1 className="font-bold mb-4 text-4xl mb-10">Recipe Finder</h1>
       <div>
         <input
           type="text"
@@ -14973,26 +15031,57 @@ export default function Home() {
           onClick={() => getRecipeList()}
         >
           <FontAwesomeIcon icon={faMagnifyingGlass} />
-          {/* Search */}
         </button>
       </div>
 
-      <div
+			<div className="tab-container my-5">
+				<div className="tab-buttons">
+					{tabsData.map((tab, index) => (
+						<button
+							key={index}
+							onClick={() => handleTabClick(tab)}
+							className={tab === activeTab ? 'active' : ''}
+						>
+							{tab.label}
+						</button>
+					))}
+				</div>
+
+				<div className="tab-content">{activeTab.content}</div>
+			</div>
+
+      <RecipeContainer className="mt-5">
+        {
+					recipeList.map((val) => (
+						<div className="recipe-card shadow-lg" key={val.uri}>
+							<img src={val.image} alt="recipe" />
+
+							<div className="recipe-content">
+								<h3 className="text-xl font-bold">
+									{ val.label }
+								</h3>
+								{/* {
+									val.healthLabels.map((healthLabel) => (
+										<div className="health-label mr-3 my-1" key={healthLabel}>
+											{ healthLabel }
+										</div>
+									))
+								} */}
+							</div>
+						</div>
+					))
+					// <div
+					//   className="border-2"
+					// >
+					//   {index}
+					// </div>
+				}
+      </RecipeContainer>
+      {/* <div
         className="recipe-card grid grid-cols-3 gap-10 mt-3"
       >
-        {
-          recipeList.map((val, index) => (
-            <div>
-              <img src={val.image} alt="recipe-image" />
-            </div>
-          ))
-        // <div
-        //   className="border-2"
-        // >
-        //   {index}
-        // </div>
-        }
-      </div>
+        
+      </div> */}
     </main>
   );
 }
